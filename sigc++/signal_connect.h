@@ -27,6 +27,20 @@
 namespace sigc
 {
 
+/** Connect a callable objet to a signal.
+ * @param signal The signal to connect to.
+ * @param fun The callable object that should be wrapped.
+ * @return A connection.
+ *
+ * @ingroup signal
+ */
+template<typename T_return, typename... T_arg, typename T_fun = T_return(T_arg...)>
+inline connection
+signal_connect(signal<T_return, T_arg...>& signal, T_fun&& fun)
+{
+  return signal.connect(fun);
+}
+
 /** Connect a function to a signal
  * @param signal The signal to connect to.
  * @param fun The function that should be wrapped.

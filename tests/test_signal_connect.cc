@@ -49,6 +49,33 @@ struct foo : public sigc::trackable
 };
 
 void
+test_signal_connect_lambda()
+{
+  sigc::signal<void(int)> signal;
+
+  sigc::signal_connect(signal, [](int i) -> void {
+    result_stream << "lambda(int " << i << ")";
+  });
+
+  signal.emit(42);
+  util->check_result(result_stream, "lambda(int 42)");
+}
+
+void
+test_signal_connect_std_function()
+{
+  sigc::signal<void(int)> signal;
+  std::function<void(int)> fun = [](int i) -> void {
+    result_stream << "std::function(int " << i << ")";
+  };
+
+  sigc::signal_connect(signal, fun);
+
+  signal.emit(42);
+  util->check_result(result_stream, "std::function(int 42)");
+}
+
+void
 test_signal_connect_fun()
 {
   sigc::signal<void(int)> signal;
@@ -112,6 +139,10 @@ main(int argc, char* argv[])
 
   if (!util->check_command_args(argc, argv))
     return util->get_result_and_delete_instance() ? EXIT_SUCCESS : EXIT_FAILURE;
+
+  test_signal_connect_lambda();
+
+  test_signal_connect_std_function();
 
   test_signal_connect_fun();
 
