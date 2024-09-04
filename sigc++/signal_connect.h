@@ -88,6 +88,36 @@ signal_connect(signal<T_return(T_arg...)>& signal, const T_obj& obj, T_return (T
   return signal.connect(mem_fun<T_return, const T_obj, const T_obj, T_arg...>(obj, fun));
 }
 
+/** Connect a non-const volatile method to a signal
+ * @param signal The signal to connect to.
+ * @param obj Reference to object instance the functor should operate on.
+ * @param fun Pointer to method that should be wrapped.
+ * @return A connection.
+ *
+ * @ingroup signal
+ */
+template<typename T_return, typename T_obj, typename... T_arg>
+inline connection
+signal_connect(signal<T_return(T_arg...)>& signal, T_obj& obj, T_return (T_obj::*fun)(T_arg...) volatile)
+{
+  return signal.connect(sigc::mem_fun<T_return, T_obj, T_obj, T_arg...>(obj, fun));
+}
+
+/** Connect a const volatile method to a signal
+ * @param signal The signal to connect to.
+ * @param obj Reference to object instance the functor should operate on.
+ * @param fun Pointer to method that should be wrapped.
+ * @return A connection.
+ *
+ * @ingroup signal
+ */
+template<typename T_return, typename T_obj, typename... T_arg>
+inline connection
+signal_connect(signal<T_return(T_arg...)>& signal, const T_obj& obj, T_return (T_obj::*fun)(T_arg...) const volatile)
+{
+  return signal.connect(sigc::mem_fun<T_return, const T_obj, const T_obj, T_arg...>(obj, fun));
+}
+
 } /* namespace sigc */
 
 #endif /* SIGC_SIGNAL_CONNECT_H */

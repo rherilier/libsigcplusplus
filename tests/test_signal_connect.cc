@@ -46,6 +46,26 @@ struct foo : public sigc::trackable
   {
     result_stream << "foo::fun_const(double " << d << ")";
   }
+
+  void fun_volatile(int i) volatile
+  {
+    result_stream << "foo::fun_volatile(int " << i << ")";
+  }
+
+  void fun_volatile(double d) volatile
+  {
+    result_stream << "foo::fun_volatile(double " << d << ")";
+  }
+
+  void fun_const_volatile(int i) const volatile
+  {
+    result_stream << "foo::fun_const_volatile(int " << i << ")";
+  }
+
+  void fun_const_volatile(double d) const volatile
+  {
+    result_stream << "foo::fun_const_volatile(double " << d << ")";
+  }
 };
 
 void
@@ -123,11 +143,50 @@ test_signal_connect_method_const_with_const_object()
 }
 
 void
+test_signal_connect_method_volatile()
+{
+  sigc::signal<void(int)> signal;
+  foo f;
+
+  sigc::signal_connect(signal, f, &foo::fun_volatile);
+
+  signal.emit(42);
+  util->check_result(result_stream, "foo::fun_volatile(int 42)");
+}
+
+void
+test_signal_connect_method_const_volatile()
+{
+  sigc::signal<void(int)> signal;
+  foo f;
+
+  sigc::signal_connect(signal, f, &foo::fun_const_volatile);
+
+  signal.emit(42);
+  util->check_result(result_stream, "foo::fun_const_volatile(int 42)");
+}
+
+void
+test_signal_connect_method_const_volatile_with_const_object()
+{
+  sigc::signal<void(int)> signal;
+  const foo f;
+
+  sigc::signal_connect(signal, f, &foo::fun_const_volatile);
+
+  signal.emit(42);
+  util->check_result(result_stream, "foo::fun_const_volatile(int 42)");
+}
+
+void
 test_signal_connect_method()
 {
   test_signal_connect_method_nonconst();
   test_signal_connect_method_const();
   test_signal_connect_method_const_with_const_object();
+  test_signal_connect_method_volatile();
+  test_signal_connect_method_const_volatile();
+  test_signal_connect_method_const_volatile_with_const_object();
 }
 
 } // end anonymous namespace
