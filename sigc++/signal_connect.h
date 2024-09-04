@@ -21,6 +21,7 @@
 #define SIGC_SIGNAL_CONNECT_H
 
 #include <sigc++/signal.h>
+#include <sigc++/bind.h>
 #include <sigc++/functors/ptr_fun.h>
 #include <sigc++/functors/mem_fun.h>
 
@@ -116,6 +117,95 @@ inline connection
 signal_connect(signal<T_return(T_arg...)>& signal, const T_obj& obj, T_return (T_obj::*fun)(T_arg...) const volatile)
 {
   return signal.connect(sigc::mem_fun<T_return, const T_obj, const T_obj, T_arg...>(obj, fun));
+}
+
+/** Connect a function with bound arguments to a signal
+ * @param signal the signal to connect to.
+ * @param fun the function that should be wrapped.
+ * @param bound Arguments to bind to @e fun.
+ * @return A connection.
+ *
+ * @note first bound argument is explicit to avoid ambiguous call when compiling with Clang (but not GCC)
+ *
+ * @ingroup signal
+ */
+template<typename T_return, typename... T_unbound, typename T_bound0, typename... T_boundn>
+inline connection
+signal_connect(signal<T_return(T_unbound...)>& signal, T_return (*fun)(T_unbound..., T_bound0, T_boundn...), T_bound0&& bound0, T_boundn&&... boundn)
+{
+  return signal.connect(bind(ptr_fun<T_return, T_unbound..., T_bound0, T_boundn...>(fun), std::forward<T_bound0>(bound0), std::forward<T_boundn>(boundn)...));
+}
+
+/** Connect non-const method with bound arguments to a signal
+ * @param signal The signal to connect to
+ * @param obj Reference to object instance the functor should operate on.
+ * @param fun Pointer to method that should be wrapped.
+ * @param bound Arguments to bind to @e fun.
+ * @return A connection.
+ *
+ * @note first bound argument is explicit to avoid ambiguous call when compiling with Clang (but not GCC)
+ *
+ * @ingroup signal
+ */
+template<typename T_return, typename T_obj, typename... T_unbound, typename T_bound0, typename... T_boundn>
+inline connection
+signal_connect(signal<T_return(T_unbound...)>& signal, T_obj& obj, T_return (T_obj::*fun)(T_unbound..., T_bound0, T_boundn...), T_bound0&& bound0, T_boundn&&... boundn)
+{
+  return signal.connect(bind(mem_fun<T_return, T_obj, T_obj, T_unbound..., T_bound0, T_boundn...>(obj, fun), std::forward<T_bound0>(bound0), std::forward<T_boundn>(boundn)...));
+}
+
+/** Connect a const method with bound arguments to a signal
+ * @param signal The signal to connect to
+ * @param obj Reference to object instance the functor should operate on.
+ * @param fun Pointer to method that should be wrapped.
+ * @param bound Arguments to bind to @e fun.
+ * @return A connection.
+ *
+ * @note first bound argument is explicit to avoid ambiguous call when compiling with Clang (but not GCC)
+ *
+ * @ingroup signal
+ */
+template<typename T_return, typename T_obj, typename... T_unbound, typename T_bound0, typename... T_boundn>
+inline connection
+signal_connect(signal<T_return(T_unbound...)>& signal, const T_obj& obj, T_return (T_obj::*fun)(T_unbound..., T_bound0, T_boundn...) const, T_bound0&& bound0, T_boundn&&... boundn)
+{
+  return signal.connect(bind(mem_fun<T_return, const T_obj, const T_obj, T_unbound..., T_bound0, T_boundn...>(obj, fun), std::forward<T_bound0>(bound0), std::forward<T_boundn>(boundn)...));
+}
+
+/** Connect a non-const volatile method with bound arguments to a signal
+ * @param signal The signal to connect to
+ * @param obj Reference to object instance the functor should operate on.
+ * @param fun Pointer to method that should be wrapped.
+ * @param bound Arguments to bind to @e fun.
+ * @return A connection.
+ *
+ * @note first bound argument is explicit to avoid ambiguous call when compiling with Clang (but not GCC)
+ *
+ * @ingroup signal
+ */
+template<typename T_return, typename T_obj, typename... T_unbound, typename T_bound0, typename... T_boundn>
+inline connection
+signal_connect(signal<T_return(T_unbound...)>& signal, T_obj& obj, T_return (T_obj::*fun)(T_unbound..., T_bound0, T_boundn...) volatile, T_bound0&& bound0, T_boundn&&... boundn)
+{
+  return signal.connect(bind(mem_fun<T_return, T_obj, T_obj, T_unbound..., T_bound0, T_boundn...>(obj, fun), std::forward<T_bound0>(bound0), std::forward<T_boundn>(boundn)...));
+}
+
+/** Connect const volatile method with bound arguments to a signal
+ * @param signal The signal to connect to
+ * @param obj Reference to object instance the functor should operate on.
+ * @param fun Pointer to method that should be wrapped.
+ * @param bound Arguments to bind to @e fun.
+ * @return A connection.
+ *
+ * @note first bound argument is explicit to avoid ambiguous call when compiling with Clang (but not GCC)
+ *
+ * @ingroup signal
+ */
+template<typename T_return, typename T_obj, typename... T_unbound, typename T_bound0, typename... T_boundn>
+inline connection
+signal_connect(signal<T_return(T_unbound...)>& signal, const T_obj& obj, T_return (T_obj::*fun)(T_unbound..., T_bound0, T_boundn...) const volatile, T_bound0&& bound0, T_boundn&&... boundn)
+{
+  return signal.connect(bind(mem_fun<T_return, const T_obj, const T_obj, T_unbound..., T_bound0, T_boundn...>(obj, fun), std::forward<T_bound0>(bound0), std::forward<T_boundn>(boundn)...));
 }
 
 } /* namespace sigc */

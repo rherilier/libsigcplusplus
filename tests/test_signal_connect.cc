@@ -25,6 +25,17 @@ fun(double d)
   result_stream << "fun(double " << d << ")";
 }
 
+void fun(int i, int j)
+{
+  result_stream << "fun(int " << i << ", int " << j << ")";
+}
+
+[[maybe_unused]]
+void fun(int i, double d)
+{
+  result_stream << "fun(int " << i << ", double " << d << ")";
+}
+
 struct foo : public sigc::trackable
 {
   void fun_nonconst(int i)
@@ -65,6 +76,49 @@ struct foo : public sigc::trackable
   void fun_const_volatile(double d) const volatile
   {
     result_stream << "foo::fun_const_volatile(double " << d << ")";
+  }
+};
+
+struct bar : public sigc::trackable
+{
+  void fun_nonconst(int i, int j)
+  {
+    result_stream << "bar::fun_nonconst(int " << i << ", int " << j << ")";
+  }
+
+  void fun_nonconst(int i, double j)
+  {
+    result_stream << "bar::fun_nonconst(int " << i << ", double " << j << ")";
+  }
+
+  void fun_const(int i, int j) const
+  {
+    result_stream << "bar::fun_const(int " << i << ", int " << j << ")";
+  }
+
+  void fun_const(int i, double j) const
+  {
+    result_stream << "bar::fun_const(int " << i << ", double " << j << ")";
+  }
+
+  void fun_volatile(int i, int j) volatile
+  {
+    result_stream << "bar::fun_volatile(int " << i << ", int " << j << ")";
+  }
+
+  void fun_volatile(int i, double j) volatile
+  {
+    result_stream << "bar::fun_volatile(int " << i << ", double " << j << ")";
+  }
+
+  void fun_const_volatile(int i, int j) const volatile
+  {
+    result_stream << "bar::fun_const_volatile(int " << i << ", int " << j << ")";
+  }
+
+  void fun_const_volatile(int i, double j) const volatile
+  {
+    result_stream << "bar::fun_const_volatile(int " << i << ", double " << j << ")";
   }
 };
 
@@ -189,6 +243,194 @@ test_signal_connect_method()
   test_signal_connect_method_const_volatile_with_const_object();
 }
 
+void
+test_signal_connect_partial_bind_fun()
+{
+  sigc::signal<void(int)> signal;
+
+  sigc::signal_connect(signal, &fun, 1); // MSVC does like it
+
+  signal.emit(42);
+  util->check_result(result_stream, "fun(int 42, int 1)");
+}
+
+void
+test_signal_connect_total_bind_fun()
+{
+  sigc::signal<void()> signal;
+
+  sigc::signal_connect(signal, &fun, 1, 2);
+
+  signal.emit();
+  util->check_result(result_stream, "fun(int 1, int 2)");
+}
+
+void
+test_signal_connect_partial_bind_method_nonconst()
+{
+  sigc::signal<void(int)> signal;
+  bar b;
+
+  sigc::signal_connect(signal, b, &bar::fun_nonconst, 1); // MSVC does like it
+
+  signal.emit(42);
+  util->check_result(result_stream, "bar::fun_nonconst(int 42, int 1)");
+}
+
+void
+test_signal_connect_partial_bind_method_const()
+{
+  sigc::signal<void(int)> signal;
+  bar b;
+
+  sigc::signal_connect(signal, b, &bar::fun_const, 1); // MSVC does like it
+
+  signal.emit(42);
+  util->check_result(result_stream, "bar::fun_const(int 42, int 1)");
+}
+
+void
+test_signal_connect_partial_bind_method_const_with_const_object()
+{
+  sigc::signal<void(int)> signal;
+  const bar b;
+
+  sigc::signal_connect(signal, b, &bar::fun_const, 1); // MSVC does like it
+
+  signal.emit(42);
+  util->check_result(result_stream, "bar::fun_const(int 42, int 1)");
+}
+
+void
+test_signal_connect_partial_bind_method_volatile()
+{
+  sigc::signal<void(int)> signal;
+  bar b;
+
+  sigc::signal_connect(signal, b, &bar::fun_volatile, 1); // MSVC does like it
+
+  signal.emit(42);
+  util->check_result(result_stream, "bar::fun_volatile(int 42, int 1)");
+}
+
+void
+test_signal_connect_partial_bind_method_const_volatile()
+{
+  sigc::signal<void(int)> signal;
+  bar b;
+
+  sigc::signal_connect(signal, b, &bar::fun_const_volatile, 1); // MSVC does like it
+
+  signal.emit(42);
+  util->check_result(result_stream, "bar::fun_const_volatile(int 42, int 1)");
+}
+
+void
+test_signal_connect_partial_bind_method_const_volatile_with_const_object()
+{
+  sigc::signal<void(int)> signal;
+  const bar b;
+
+  sigc::signal_connect(signal, b, &bar::fun_const_volatile, 1); // MSVC does like it
+
+  signal.emit(42);
+  util->check_result(result_stream, "bar::fun_const_volatile(int 42, int 1)");
+}
+
+void
+test_signal_connect_partial_bind_method()
+{
+  test_signal_connect_partial_bind_method_nonconst();
+  test_signal_connect_partial_bind_method_const();
+  test_signal_connect_partial_bind_method_const_with_const_object();
+  test_signal_connect_partial_bind_method_volatile();
+  test_signal_connect_partial_bind_method_const_volatile();
+  test_signal_connect_partial_bind_method_const_volatile_with_const_object();
+}
+
+void
+test_signal_connect_total_bind_method_nonconst()
+{
+  sigc::signal<void()> signal;
+  bar b;
+
+  sigc::signal_connect(signal, b, &bar::fun_nonconst, 1, 2); // MSVC does like it
+
+  signal.emit();
+  util->check_result(result_stream, "bar::fun_nonconst(int 1, int 2)");
+}
+
+void
+test_signal_connect_total_bind_method_const()
+{
+  sigc::signal<void()> signal;
+  bar b;
+
+  sigc::signal_connect(signal, b, &bar::fun_const, 1, 2); // MSVC does like it
+
+  signal.emit();
+  util->check_result(result_stream, "bar::fun_const(int 1, int 2)");
+}
+
+void
+test_signal_connect_total_bind_method_const_with_const_object()
+{
+  sigc::signal<void()> signal;
+  const bar b;
+
+  sigc::signal_connect(signal, b, &bar::fun_const, 1, 2); // MSVC does like it
+
+  signal.emit();
+  util->check_result(result_stream, "bar::fun_const(int 1, int 2)");
+}
+
+void
+test_signal_connect_total_bind_method_volatile()
+{
+  sigc::signal<void()> signal;
+  bar b;
+
+  sigc::signal_connect(signal, b, &bar::fun_volatile, 1, 2); // MSVC does like it
+
+  signal.emit();
+  util->check_result(result_stream, "bar::fun_volatile(int 1, int 2)");
+}
+
+void
+test_signal_connect_total_bind_method_const_volatile()
+{
+  sigc::signal<void()> signal;
+  bar b;
+
+  sigc::signal_connect(signal, b, &bar::fun_const_volatile, 1, 2); // MSVC does like it
+
+  signal.emit();
+  util->check_result(result_stream, "bar::fun_const_volatile(int 1, int 2)");
+}
+
+void
+test_signal_connect_total_bind_method_const_volatile_with_const_object()
+{
+  sigc::signal<void()> signal;
+  const bar b;
+
+  sigc::signal_connect(signal, b, &bar::fun_const_volatile, 1, 2); // MSVC does like it
+
+  signal.emit();
+  util->check_result(result_stream, "bar::fun_const_volatile(int 1, int 2)");
+}
+
+void
+test_signal_connect_total_bind_method()
+{
+  test_signal_connect_total_bind_method_nonconst();
+  test_signal_connect_total_bind_method_const();
+  test_signal_connect_total_bind_method_const_with_const_object();
+  test_signal_connect_total_bind_method_volatile();
+  test_signal_connect_total_bind_method_const_volatile();
+  test_signal_connect_total_bind_method_const_volatile_with_const_object();
+}
+
 } // end anonymous namespace
 
 int
@@ -206,6 +448,14 @@ main(int argc, char* argv[])
   test_signal_connect_fun();
 
   test_signal_connect_method();
+
+  test_signal_connect_partial_bind_fun();
+
+  test_signal_connect_total_bind_fun();
+
+  test_signal_connect_partial_bind_method();
+
+  test_signal_connect_total_bind_method();
 
   return util->get_result_and_delete_instance() ? EXIT_SUCCESS : EXIT_FAILURE;
 }
